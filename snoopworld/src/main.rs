@@ -7,7 +7,8 @@ use tokio::signal;
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
-
+    
+    info!("HELLO");
     // Bump the memlock rlimit. This is needed for older kernels that don't use the
     // new memcg based accounting, see https://lwn.net/Articles/837122/
     let rlim = libc::rlimit {

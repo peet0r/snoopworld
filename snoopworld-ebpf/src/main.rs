@@ -8,20 +8,21 @@
 mod vmlinux;
 
 use core::ffi::c_char;
-
+use core::mem::transmute;
 use memoffset::offset_of;
 
 use aya_bpf::{
     cty::{c_void, uintptr_t},
-    helpers::{bpf_probe_read, bpf_probe_read_kernel, bpf_skc_to_unix_sock},
+    helpers::{
+        bpf_probe_read, bpf_probe_read_kernel, bpf_probe_read_kernel_str_bytes,
+        gen::bpf_skc_to_unix_sock
+    },
     macros::kprobe,
     programs::ProbeContext,
 };
 use aya_log_ebpf::{error, info};
 
 use vmlinux::{sock, sockaddr_un, socket, unix_address, unix_sock};
-
-use crate::vmlinux::sock_common;
 
 #[kprobe]
 pub fn snoopworld(ctx: ProbeContext) -> u32 {
@@ -38,22 +39,27 @@ unsafe fn try_snoopworld(ctx: ProbeContext) -> Result<u32, i64> {
     info!(&ctx, "function unix_stream_sendmsg called");
 
     let my_socket: *const socket = ctx.arg(0).ok_or(1i64)?;
-    let usock = bpf_probe_read_kernel(&((*my_socket).sk)).map_err(|e| {
+    let msock = bpf_probe_read_kernel(&((*my_socket).sk)).map_err(|e| {
         error!(&ctx, "my_socket failed: {}", e);
         e as i64
     })?;
     info!(&ctx, "sock",);
-    let family = bpf_probe_read_kernel(&(*usock).__sk_common.skc_family).map_err(|e| {
+    let family = bpf_probe_read_kernel(&(*msock).__sk_common.skc_family).map_err(|e| {
         error!(&ctx, "sock failed {}", e);
         e as i64
     })?;
 
     if family == 1 {
         info!(&ctx, "family {}", family);
+        let d = bpf_skc_to_unix_sock(msock as *mut c_void);
+
+        let usock = bpf_probe_read_kernel(&(*d)).map_err(|e| {
+            error!(&ctx, "usock failed {}", e);
+            e as i64
+        })?;
+        
+
     }
-
-
-
     Ok(0)
 }
 

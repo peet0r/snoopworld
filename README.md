@@ -4,6 +4,9 @@
 
 1. Install bpf-linker: `cargo install bpf-linker`
 
+## Build ALL on mac
+cargo xtask build-ebpf --release && RUSTFLAGS="-Clinker=aarch64-linux-musl-ld" cargo build --target=aarch64-unknown-linux-musl --release
+
 ## Build eBPF
 
 ```bash

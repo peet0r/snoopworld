@@ -15,10 +15,10 @@ use aya_bpf::{
     cty::{c_void, uintptr_t},
     helpers::{
         bpf_probe_read, bpf_probe_read_kernel, bpf_probe_read_kernel_str_bytes,
-        gen::bpf_skc_to_unix_sock
     },
     macros::kprobe,
     programs::ProbeContext,
+    
 };
 use aya_log_ebpf::{error, info};
 
@@ -51,12 +51,6 @@ unsafe fn try_snoopworld(ctx: ProbeContext) -> Result<u32, i64> {
 
     if family == 1 {
         info!(&ctx, "family {}", family);
-        let d = bpf_skc_to_unix_sock(msock as *mut c_void);
-
-        let usock = bpf_probe_read_kernel(&(*d)).map_err(|e| {
-            error!(&ctx, "usock failed {}", e);
-            e as i64
-        })?;
         
 
     }
